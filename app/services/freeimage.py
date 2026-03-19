@@ -7,8 +7,14 @@ from dotenv import load_dotenv
 # Load .env file explicitly from PythonAnywhere path
 load_dotenv("/home/gembonganggeredu/mysite/.env")
 
-# Local upload folder for PythonAnywhere
-UPLOAD_FOLDER = "/home/gembonganggeredu/mysite/static/uploads"
+# Local upload folder - different for local dev vs production
+if os.path.exists("/home/gembonganggeredu"):
+    # Production on PythonAnywhere
+    UPLOAD_FOLDER = "/home/gembonganggeredu/mysite/static/uploads"
+else:
+    # Local development
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "uploads")
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 

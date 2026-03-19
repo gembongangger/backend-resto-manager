@@ -30,7 +30,12 @@ def create_app(config_object=Config):
     # Serve uploaded files
     @app.route("/static/uploads/<filename>")
     def serve_upload(filename):
-        upload_folder = "/home/gembonganggeredu/mysite/static/uploads"
+        if os.path.exists("/home/gembonganggeredu"):
+            # Production on PythonAnywhere
+            upload_folder = "/home/gembonganggeredu/mysite/static/uploads"
+        else:
+            # Local development
+            upload_folder = os.path.join(app.root_path, "static", "uploads")
         return send_from_directory(upload_folder, filename)
 
     @jwt.user_lookup_loader
