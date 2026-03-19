@@ -61,7 +61,7 @@ def upload_to_freeimage(file) -> Tuple[Optional[str], Optional[str]]:
     filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(filepath)
 
-    # Return URL path (relative to static folder)
-    url = f"/static/uploads/{unique_filename}"
+    # Return URL path
+    url = f"/uploads/{unique_filename}"
     return url, None
 

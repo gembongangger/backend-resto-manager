@@ -28,7 +28,7 @@ def create_app(config_object=Config):
     register_blueprints(app)
 
     # Serve uploaded files
-    @app.route("/static/uploads/<filename>")
+    @app.route("/uploads/<filename>")
     def serve_upload(filename):
         if os.path.exists("/home/gembonganggeredu"):
             # Production on PythonAnywhere
