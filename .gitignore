@@ -15,3 +15,6 @@ build/
 *.log
 .DS_Store
 credentials.json
+
+# PythonAnywhere deployment scripts (local only)
+sync_github.py
