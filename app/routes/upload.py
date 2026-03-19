@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from ..services.freeimage import upload_to_freeimage
+from ..services.freeimage import upload_to_freeimage, UPLOAD_FOLDER
 
 bp = Blueprint("upload", __name__)
 
@@ -16,4 +16,20 @@ def upload_freeimage():
         return jsonify({"error": error or "upload_failed"}), 400
 
     return jsonify({"url": url})
+
+
+@bp.get("/list")
+def list_uploads():
+    """Debug endpoint to list uploaded files"""
+    import os
+    
+    if not os.path.exists(UPLOAD_FOLDER):
+        return jsonify({"error": "upload_folder_not_found", "path": UPLOAD_FOLDER}), 404
+    
+    files = os.listdir(UPLOAD_FOLDER)
+    return jsonify({
+        "folder": UPLOAD_FOLDER,
+        "files": files,
+        "count": len(files)
+    })
 

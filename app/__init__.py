@@ -36,6 +36,13 @@ def create_app(config_object=Config):
         else:
             # Local development
             upload_folder = os.path.join(app.root_path, "static", "uploads")
+        
+        # Check if file exists
+        file_path = os.path.join(upload_folder, filename)
+        if not os.path.exists(file_path):
+            from flask import abort
+            abort(404)
+        
         return send_from_directory(upload_folder, filename)
 
     @jwt.user_lookup_loader
