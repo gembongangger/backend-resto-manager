@@ -9,6 +9,7 @@ from .reports import bp as reports_bp
 from .kitchen import bp as kitchen_bp
 from .recipes import bp as recipes_bp
 from .finance import bp as finance_bp
+from .upload import bp as upload_bp
 
 
 def register_blueprints(app):
@@ -23,3 +24,4 @@ def register_blueprints(app):
     app.register_blueprint(kitchen_bp, url_prefix="/kitchen")
     app.register_blueprint(recipes_bp, url_prefix="/recipes")
     app.register_blueprint(finance_bp, url_prefix="/finance")
+    app.register_blueprint(upload_bp, url_prefix="/upload")

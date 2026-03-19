@@ -12,7 +12,11 @@ def create_app(config_object=Config):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_object)
 
-    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=True,
+    )
 
     # Ensure instance folder exists for sqlite and local config overrides.
     os.makedirs(app.instance_path, exist_ok=True)
