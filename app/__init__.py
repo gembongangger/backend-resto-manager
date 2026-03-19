@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 
 from .config import Config
@@ -26,6 +26,12 @@ def create_app(config_object=Config):
     jwt.init_app(app)
 
     register_blueprints(app)
+
+    # Serve uploaded files
+    @app.route("/static/uploads/<filename>")
+    def serve_upload(filename):
+        upload_folder = "/home/gembonganggeredu/mysite/static/uploads"
+        return send_from_directory(upload_folder, filename)
 
     @jwt.user_lookup_loader
     def load_user(_jwt_header, jwt_data):
