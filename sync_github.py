@@ -149,8 +149,9 @@ def run_migrations():
     
     # Check if Flask app exists
     wsgi = SITE_ROOT / "wsgi.py"
-    if not wsgi.exists():
-        print("  ! wsgi.py not found, skipping migrations")
+    runpy = SITE_ROOT / "run.py"
+    if not wsgi.exists() and not runpy.exists():
+        print("  ! Flask app not found, skipping migrations")
         return False
     
     # Try to run migrations
@@ -162,7 +163,8 @@ def run_migrations():
     
     # Set environment
     env = os.environ.copy()
-    env["FLASK_APP"] = "wsgi.py"
+    env["FLASK_APP"] = "run.py"
+    env["FLASK_ENV"] = "production"
     
     try:
         result = subprocess.run(
@@ -187,15 +189,21 @@ def collect_static():
     """Collect static files if needed"""
     print_header("Checking Static Files")
     
-    # Ensure uploads folder exists
-    uploads_dir = SITE_ROOT / "static" / "uploads"
-    uploads_dir.mkdir(exist_ok=True)
-    print(f"  ✓ Uploads folder exists: {uploads_dir}")
-    
-    # Ensure static folder exists
-    static_dir = SITE_ROOT / "static"
-    static_dir.mkdir(exist_ok=True)
-    print(f"  ✓ Static folder exists: {static_dir}")
+    try:
+        # Ensure uploads folder exists
+        uploads_dir = SITE_ROOT / "static" / "uploads"
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  ✓ Uploads folder exists: {uploads_dir}")
+        
+        # Ensure static folder exists
+        static_dir = SITE_ROOT / "static"
+        static_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  ✓ Static folder exists: {static_dir}")
+    except PermissionError as e:
+        print(f"  ! Permission error: {e}")
+        print("  Try: chmod -R u+w /home/gembonganggeredu/mysite")
+    except Exception as e:
+        print(f"  ! Error creating directories: {e}")
 
 
 def main():
