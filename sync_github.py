@@ -9,6 +9,7 @@ Usage:
 Options:
     --branch    Branch to pull from (default: main)
     --hard      Reset all local changes before pulling
+ok byebeh
 """
 
 import os
