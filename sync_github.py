@@ -206,6 +206,25 @@ def collect_static():
         print(f"  ! Error creating directories: {e}")
 
 
+def reload_app():
+    """Reload PythonAnywhere app"""
+    print_header("Reloading Application")
+    
+    wsgi_file = "/var/www/gembonganggeredu_pythonanywhere_com_wsgi.py"
+    
+    try:
+        # Touch the WSGI file to trigger reload
+        os.utime(wsgi_file, None)
+        print(f"  ✓ Reload triggered: {wsgi_file}")
+        print("  ! Please wait a few seconds for the app to restart")
+    except PermissionError:
+        print(f"  ! Permission denied: {wsgi_file}")
+        print("  Manual reload needed - click 'Reload' in PythonAnywhere Dashboard")
+    except Exception as e:
+        print(f"  ! Error triggering reload: {e}")
+        print("  Manual reload needed - run: touch /var/www/gembonganggeredu_pythonanywhere_com_wsgi.py")
+
+
 def main():
     print_header("GitHub Sync Script for PythonAnywhere")
     print(f"Site Root: {SITE_ROOT}")
@@ -242,12 +261,15 @@ def main():
     
     # Check static
     collect_static()
-    
+
+    # Reload PythonAnywhere app
+    reload_app()
+
     print_header("Sync Complete!")
-    print("\nNext steps:")
-    print("1. Go to PythonAnywhere Dashboard")
-    print("2. Click 'Reload' button for gembonganggeredu.pythonanywhere.com")
-    print("\nOr run: touch /var/www/gembonganggeredu_pythonanywhere_com_wsgi.py")
+    print("\n✓ All done!")
+    print("\nYour app has been reloaded automatically.")
+    print("If reload failed, manually run:")
+    print("  touch /var/www/gembonganggeredu_pythonanywhere_com_wsgi.py")
 
 
 if __name__ == "__main__":
