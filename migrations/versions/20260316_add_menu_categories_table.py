@@ -43,9 +43,10 @@ def upgrade():
 
     # Migrate existing string category -> category_id
     if "category" in columns:
+        # Use INSERT IGNORE for MySQL (works with MariaDB too)
         op.execute(
             text(
-                "INSERT OR IGNORE INTO menu_categories (restaurant_id, name, created_at) "
+                "INSERT IGNORE INTO menu_categories (restaurant_id, name, created_at) "
                 "SELECT DISTINCT restaurant_id, category, CURRENT_TIMESTAMP "
                 "FROM menu_items WHERE category IS NOT NULL AND category != ''"
             )
