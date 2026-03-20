@@ -216,31 +216,76 @@ def update_transaction(tx_id: int):
     cost = data.get("cost")
     notes = data.get("notes")
 
-    # Update quantity and cost if provided
+    # Get the inventory item for price recalculation
+    item = KitchenInventory.query.filter_by(id=tx.inventory_item_id, restaurant_id=restaurant_id).first()
+    if not item:
+        return jsonify({"error": "item_not_found"}), 404
+
+    # First, reverse the old transaction effect on inventory
+    if tx.type == "IN":
+        item.current_quantity -= tx.quantity
+    else:  # OUT
+        item.current_quantity += tx.quantity
+
+    # Update transaction fields
+    new_quantity = tx.quantity
+    new_cost = tx.cost
+    
     if quantity is not None:
         new_quantity = float(quantity)
-        if new_quantity > 0:
-            # Calculate quantity difference
-            qty_diff = new_quantity - tx.quantity
-            
-            # Update inventory item quantity based on transaction type
-            item = KitchenInventory.query.filter_by(id=tx.inventory_item_id, restaurant_id=restaurant_id).first()
-            if item:
-                if tx.type == "IN":
-                    item.current_quantity += qty_diff
-                else:  # OUT
-                    if item.current_quantity < qty_diff:
-                        return jsonify({"error": "insufficient_quantity"}), 400
-                    item.current_quantity -= qty_diff
-            
-            tx.quantity = new_quantity
-    
-    # Update cost if provided (only for IN transactions)
+        if new_quantity <= 0:
+            return jsonify({"error": "invalid_quantity"}), 400
+
     if cost is not None and tx.type == "IN":
-        tx.cost = float(cost)
+        new_cost = float(cost)
 
     if notes is not None:
         tx.notes = notes
+
+    # Update transaction with new values
+    tx.quantity = new_quantity
+    if tx.type == "IN" and cost is not None:
+        tx.cost = new_cost
+
+    # Now apply the new transaction effect and recalculate price
+    if tx.type == "IN":
+        item.current_quantity += new_quantity
+
+        # Recalculate weighted average price for IN transactions
+        if new_cost and new_quantity > 0:
+            new_price_per_unit = new_cost / new_quantity
+
+            # Weighted average: (old_price × old_qty + new_price × new_qty) / (old_qty + new_qty)
+            if item.current_quantity > 0:
+                # Get all IN transactions for this item except current one
+                other_in_txs = KitchenTransaction.query.filter_by(
+                    inventory_item_id=item.id,
+                    type="IN"
+                ).filter(KitchenTransaction.id != tx_id).all()
+
+                # Calculate total value and quantity from other transactions
+                total_value = 0.0
+                total_qty = 0.0
+                for other_tx in other_in_txs:
+                    if other_tx.cost and other_tx.quantity:
+                        other_price_per_unit = other_tx.cost / other_tx.quantity
+                        total_value += other_price_per_unit * other_tx.quantity
+                        total_qty += other_tx.quantity
+
+                # Add current transaction value
+                total_value += new_cost
+                total_qty += new_quantity
+
+                # New weighted average price
+                if total_qty > 0:
+                    item.price = total_value / total_qty
+                    item.unit_cost = item.price
+    else:  # OUT transaction
+        if item.current_quantity < new_quantity:
+            # Reverse back the old effect since we can't apply new one
+            item.current_quantity -= tx.quantity
+            return jsonify({"error": "insufficient_quantity"}), 400
+        item.current_quantity -= new_quantity
 
     db.session.commit()
     return jsonify(serialize_transaction(tx))
