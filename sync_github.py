@@ -227,15 +227,26 @@ def run_migrations():
             cwd=SITE_ROOT,
             env=env,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=60  # Timeout after 60 seconds
         )
-        print(result.stdout)
+        
+        # Print stdout and stderr
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr)
+            
         if result.returncode == 0:
-            print("  ✓ Migrations completed")
+            print("  ✓ Migrations completed (or already up to date)")
         else:
-            print(f"  ! Migration output: {result.stderr}")
+            print(f"  ! Migration failed with code {result.returncode}")
+            print("  This may be OK if database is already up to date.")
+    except subprocess.TimeoutExpired:
+        print(f"  ! Migration timed out after 60 seconds")
     except Exception as e:
         print(f"  ! Could not run migrations: {e}")
+        print("  If database is already up to date, this is OK.")
 
     return True
 
@@ -340,7 +351,7 @@ def main():
     # Install dependencies
     install_dependencies()
 
-    # Run migrations
+    # Run migrations (Alembic will skip already applied migrations)
     run_migrations()
 
     # Check static

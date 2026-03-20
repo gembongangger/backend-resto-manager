@@ -26,8 +26,8 @@ def upgrade():
         sa.Column("amount", sa.Float(), nullable=False),
         sa.Column("notes", sa.String(length=255), nullable=True),
         sa.Column("entry_date", sa.DateTime(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.CheckConstraint(
             "entry_type in ('salary', 'owner_draw', 'expense')",
             name="ck_finance_entries_entry_type",
