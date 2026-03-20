@@ -1,60 +1,5 @@
 import os
-from pathlib import Path
 from urllib.parse import quote_plus
-from dotenv import load_dotenv
-
-
-def _detect_environment():
-    """
-    Detect running environment and return the appropriate .env file path.
-    - Production (PythonAnywhere): /home/gembonganggeredu/... or DB_HOST contains 'pythonanywhere'
-    - Local: everything else
-    """
-    # Check for PythonAnywhere environment
-    if os.path.exists("/home/gembonganggeredu"):
-        return "production"
-    
-    # Check if already has DB_HOST set to PythonAnywhere
-    db_host = os.getenv("DB_HOST", "")
-    if "pythonanywhere" in db_host.lower():
-        return "production"
-    
-    # Check for FLASK_ENV environment variable
-    flask_env = os.getenv("FLASK_ENV", "development")
-    if flask_env == "production":
-        return "production"
-    
-    return "development"
-
-
-def _load_env_file():
-    """
-    Load appropriate .env file based on detected environment.
-    - Production: .env.production
-    - Development: .env (default)
-    """
-    env = _detect_environment()
-    
-    # Get the project root directory (backend folder)
-    # Navigate from app/config.py to backend/
-    current_file = Path(__file__).resolve()
-    project_root = current_file.parent.parent  # backend/
-    
-    if env == "production":
-        env_file = project_root / ".env.production"
-        if env_file.exists():
-            load_dotenv(dotenv_path=env_file)
-            return "production"
-        else:
-            # Fallback to .env if .env.production doesn't exist
-            load_dotenv()
-            return "development (fallback)"
-    else:
-        # Development - load .env
-        env_file = project_root / ".env"
-        if env_file.exists():
-            load_dotenv(dotenv_path=env_file)
-        return "development"
 
 
 def _build_mysql_uri():
@@ -65,11 +10,11 @@ def _build_mysql_uri():
         return database_url
 
     # Build URI from individual components
-    user = os.getenv("DB_USER", "root")
+    user = os.getenv("DB_USER", "gembonganggeredu")
     password = os.getenv("DB_PASSWORD", "")
-    host = os.getenv("DB_HOST", "localhost")
+    host = os.getenv("DB_HOST", "gembonganggeredu.mysql.pythonanywhere-services.com")
     port = os.getenv("DB_PORT", "3306")
-    database = os.getenv("DB_NAME", "restaurant_db")
+    database = os.getenv("DB_NAME", "gembonganggeredu$restaurant_db")
 
     # URL-encode password if it contains special characters
     encoded_password = quote_plus(password) if password else ""
@@ -119,13 +64,13 @@ class SQLiteConfig(BaseConfig):
 
 
 class MySQLConfig(BaseConfig):
-    """Configuration for MySQL database (production)."""
-    
+    """Configuration for MySQL database (production - PythonAnywhere)."""
+
     @classmethod
     def get_database_uri(cls):
         """Get database URI, building it from env vars if needed."""
         return _build_mysql_uri()
-    
+
     # Connection pool settings for MySQL
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_size": 10,
@@ -155,6 +100,12 @@ class PostgreSQLConfig(BaseConfig):
     }
 
 
+class PythonAnywhereConfig(MySQLConfig):
+    """Configuration for PythonAnywhere production environment."""
+    # Override defaults for PythonAnywhere
+    pass
+
+
 def get_config():
     """Get configuration class based on environment variables."""
     db_type = os.getenv("DB_TYPE", "sqlite").lower()
@@ -167,5 +118,5 @@ def get_config():
         return SQLiteConfig
 
 
-# Default configuration for backward compatibility
-Config = SQLiteConfig
+# Default configuration for PythonAnywhere production
+Config = PythonAnywhereConfig

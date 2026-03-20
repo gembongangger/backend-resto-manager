@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to sync PythonAnywhere deployment with GitHub repository.
-Place this script in /home/gembonganggeredu/mysite/ and run via PythonAnywhere console.
+Can be run from any directory - will use the script's directory as target.
 
 Usage:
     python sync_github.py [--branch main] [--hard]
@@ -17,10 +17,11 @@ import sys
 from pathlib import Path
 
 
-# Configuration
-SITE_ROOT = Path("/home/gembonganggeredu/mysite")
+# Configuration - Use script's directory as target
+SCRIPT_DIR = Path(__file__).resolve().parent
+SITE_ROOT = SCRIPT_DIR
 BACKUP_DIR = SITE_ROOT / "backups"
-GIT_DIR = SITE_ROOT  # Assuming the repo is cloned at mysite root
+GIT_DIR = SITE_ROOT  # Assuming the repo is cloned at script's directory
 
 
 def print_header(text):
@@ -111,8 +112,17 @@ def pull_changes(branch="main", hard_reset=False):
     run_command("git fetch origin")
 
     # Stash local changes to sync_github.py (this script) to avoid conflicts
-    print("  → Stashing local changes to sync_github.py...")
-    run_command("git stash push -m 'local sync_github.py' sync_github.py")
+    # Only stash if there are actual changes to this file
+    print("  → Checking for local changes to sync_github.py...")
+    stash_result = run_command("git diff --quiet sync_github.py || git stash push -m 'local sync_github.py' sync_github.py", check=False)
+    if stash_result and hasattr(stash_result, 'returncode'):
+        # Check if file has changes before stashing
+        diff_check = run_command("git diff sync_github.py --stat", check=False)
+        if diff_check and diff_check.stdout.strip():
+            print("  → Stashing local changes to sync_github.py...")
+            run_command("git stash push -m 'local sync_github.py' sync_github.py", check=False)
+        else:
+            print("  → No local changes to sync_github.py, skipping stash")
 
     if hard_reset:
         print("  → Hard resetting local changes (keeping uploads & database safe)...")
@@ -277,24 +287,28 @@ def reload_app():
     """Reload PythonAnywhere app"""
     print_header("Reloading Application")
 
-    wsgi_file = "/var/www/gembonganggeredu_pythonanywhere_com_wsgi.py"
+    # Try to detect PythonAnywhere WSGI file based on site root name
+    site_name = SITE_ROOT.name  # e.g., "mysite"
+    wsgi_file = f"/var/www/gembonganggeredu_pythonanywhere_com_wsgi.py"
 
     try:
         # Touch the WSGI file to trigger reload
         os.utime(wsgi_file, None)
         print(f"  ✓ Reload triggered: {wsgi_file}")
         print("  ! Please wait a few seconds for the app to restart")
-    except PermissionError:
-        print(f"  ! Permission denied: {wsgi_file}")
+    except (PermissionError, FileNotFoundError):
+        print(f"  ! Cannot access: {wsgi_file}")
         print("  Manual reload needed - click 'Reload' in PythonAnywhere Dashboard")
+        print(f"  Or run: touch {wsgi_file}")
     except Exception as e:
         print(f"  ! Error triggering reload: {e}")
-        print("  Manual reload needed - run: touch /var/www/gembonganggeredu_pythonanywhere_com_wsgi.py")
+        print("  Manual reload needed - click 'Reload' in PythonAnywhere Dashboard")
 
 
 def main():
     print_header("GitHub Sync Script for PythonAnywhere")
     print(f"Site Root: {SITE_ROOT}")
+    print(f"Script Location: {Path(__file__).resolve()}")
 
     # Parse arguments
     branch = "main"

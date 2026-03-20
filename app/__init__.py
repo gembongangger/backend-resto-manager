@@ -2,15 +2,31 @@ import os
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 
-from .config import Config
+from .config import get_config, BaseConfig, MySQLConfig, _load_env_file
 from .extensions import db, migrate, jwt
 from .routes import register_blueprints
 from .models import User
 
+# Auto-detect environment and load appropriate .env file
+# Must be called before get_config()
+env_detected = _load_env_file()
+print(f"Environment detected: {env_detected}")
 
-def create_app(config_object=Config):
+
+def create_app(config_object=None):
     app = Flask(__name__, instance_relative_config=True)
+
+    # Use provided config or auto-detect from environment
+    if config_object is None:
+        config_object = get_config()
+
     app.config.from_object(config_object)
+    
+    # Set database URI for MySQL config (build from env vars at runtime)
+    if isinstance(config_object, type) and issubclass(config_object, MySQLConfig):
+        app.config['SQLALCHEMY_DATABASE_URI'] = MySQLConfig.get_database_uri()
+    elif config_object == MySQLConfig:
+        app.config['SQLALCHEMY_DATABASE_URI'] = MySQLConfig.get_database_uri()
 
     CORS(
         app,
