@@ -213,7 +213,31 @@ def update_transaction(tx_id: int):
 
     tx_type = data.get("type")
     quantity = data.get("quantity")
+    cost = data.get("cost")
     notes = data.get("notes")
+
+    # Update quantity and cost if provided
+    if quantity is not None:
+        new_quantity = float(quantity)
+        if new_quantity > 0:
+            # Calculate quantity difference
+            qty_diff = new_quantity - tx.quantity
+            
+            # Update inventory item quantity based on transaction type
+            item = KitchenInventory.query.filter_by(id=tx.inventory_item_id, restaurant_id=restaurant_id).first()
+            if item:
+                if tx.type == "IN":
+                    item.current_quantity += qty_diff
+                else:  # OUT
+                    if item.current_quantity < qty_diff:
+                        return jsonify({"error": "insufficient_quantity"}), 400
+                    item.current_quantity -= qty_diff
+            
+            tx.quantity = new_quantity
+    
+    # Update cost if provided (only for IN transactions)
+    if cost is not None and tx.type == "IN":
+        tx.cost = float(cost)
 
     if notes is not None:
         tx.notes = notes
