@@ -13,17 +13,17 @@ def _detect_environment():
     # Check for PythonAnywhere environment
     if os.path.exists("/home/gembonganggeredu"):
         return "production"
-    
+
     # Check if already has DB_HOST set to PythonAnywhere
     db_host = os.getenv("DB_HOST", "")
     if "pythonanywhere" in db_host.lower():
         return "production"
-    
+
     # Check for FLASK_ENV environment variable
     flask_env = os.getenv("FLASK_ENV", "development")
     if flask_env == "production":
         return "production"
-    
+
     return "development"
 
 
@@ -34,12 +34,12 @@ def _load_env_file():
     - Development: .env (default)
     """
     env = _detect_environment()
-    
+
     # Get the project root directory (backend folder)
     # Navigate from app/config.py to backend/
     current_file = Path(__file__).resolve()
     project_root = current_file.parent.parent  # backend/
-    
+
     if env == "production":
         env_file = project_root / ".env.production"
         if env_file.exists():
@@ -88,7 +88,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     _cors_origins_raw = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,https://resto-manager.netlify.app",
+        "http://localhost:5173,http://127.0.0.1:5173,https://resto-manager.netlify.app",".app,capacitor://localhost,http://localhos",
     )
     CORS_ORIGINS = [
         origin.strip().rstrip("/")
@@ -120,12 +120,12 @@ class SQLiteConfig(BaseConfig):
 
 class MySQLConfig(BaseConfig):
     """Configuration for MySQL database (production)."""
-    
+
     @classmethod
     def get_database_uri(cls):
         """Get database URI, building it from env vars if needed."""
         return _build_mysql_uri()
-    
+
     # Connection pool settings for MySQL
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_size": 10,
