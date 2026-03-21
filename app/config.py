@@ -88,7 +88,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     _cors_origins_raw = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,https://resto-manager.netlify.app",".app,capacitor://localhost,http://localhos",
+        "http://localhost:5173,http://127.0.0.1:5173,https://resto-manager.netlify.app",
     )
     CORS_ORIGINS = [
         origin.strip().rstrip("/")
