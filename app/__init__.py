@@ -28,11 +28,12 @@ def create_app(config_object=None):
     elif config_object == MySQLConfig:
         app.config['SQLALCHEMY_DATABASE_URI'] = MySQLConfig.get_database_uri()
 
-    CORS(
-        app,
-        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
-        supports_credentials=True,
-    )
+    CORS(app)  # Allow all origins
+    # CORS(
+    #     app,
+    #     resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
+    #     supports_credentials=True,
+    # )
 
     # Ensure instance folder exists for sqlite and local config overrides.
     os.makedirs(app.instance_path, exist_ok=True)
